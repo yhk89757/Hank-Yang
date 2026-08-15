@@ -1,0 +1,6 @@
+{
+  "name": "智能转岗系统",
+  "description": "标准透明、有温度、可解释的 AI 内部自驱转岗竞聘工具。平衡员工体验与业务需求，促进组织人才高效流转。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,14 @@
+{
+  "name": "lighthouse-api-server",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node server-cloud.cjs",
+    "start:pm2": "pm2 start server-cloud.cjs --name lighthouse-api"
+  },
+  "dependencies": {
+    "sql.js": "^1.14.1",
+    "express": "^4.21.2",
+    "cors": "^2.8.6"
+  }
+}

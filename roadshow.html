@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>透明岗途 — 立项路演 PPT 汇报空间</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
+  
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { 
+    font-family: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #F7F8FA; 
+    overflow: hidden; 
+    color: #1D2129;
+  }
+  
+  /* Slide transitions */
+  .slide-enter { animation: slideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  .slide-exit { animation: slideOut 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  @keyframes slideIn { 
+    from { opacity:0; transform:translateX(40px) scale(0.98); } 
+    to { opacity:1; transform:translateX(0) scale(1); } 
+  }
+  @keyframes slideOut { 
+    from { opacity:1; transform:translateX(0) scale(1); } 
+    to { opacity:0; transform:translateX(-40px) scale(0.98); } 
+  }
+  
+  /* Radar pulse */
+  @keyframes radarPulse {
+    0% { box-shadow: 0 0 0 0 rgba(0,82,217,0.5); }
+    70% { box-shadow: 0 0 0 14px rgba(0,82,217,0); }
+    100% { box-shadow: 0 0 0 0 rgba(0,82,217,0); }
+  }
+  .radar-btn { animation: radarPulse 2s ease-in-out infinite; }
+  
+  /* Gradient text — blue tone */
+  .gradient-text {
+    background: linear-gradient(135deg, #0052D9 0%, #3662EC 50%, #618DFF 100%);
+    background-size: 200% 200%;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradientShift 5s ease infinite;
+  }
+  @keyframes gradientShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+  
+  /* Node pulse */
+  @keyframes nodePulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.04)} }
+  .node-pulse { animation: nodePulse 3s ease-in-out infinite; }
+  .node-pulse-delay-1 { animation-delay: 0.5s; }
+  .node-pulse-delay-2 { animation-delay: 1s; }
+  .node-pulse-delay-3 { animation-delay: 1.5s; }
+  
+  /* Card hover */
+  .demo-card { transition: all 0.3s cubic-bezier(0.16,1,0.3,1); }
+  .demo-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,82,217,0.1); }
+  
+  /* Custom scrollbar */
+  .custom-scrollbar::-webkit-scrollbar { width:4px }
+  .custom-scrollbar::-webkit-scrollbar-track { background:transparent }
+  .custom-scrollbar::-webkit-scrollbar-thumb { background:rgba(0,0,0,0.12); border-radius:4px }
+  
+  /* Float animation */
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+  .float { animation: float 5s ease-in-out infinite; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useCallback, useRef, useMemo } = React;
+
+// ========================= CONSTANTS =========================
+
+const SLIDES = 5;
+const SYSTEM_BASE = 'https://hank89757-d8glv2d4ufa70b0d9-1442530132.tcloudbaseapp.com';
+
+const SLIDE_CONTENT = [
+  { title: "我们解决什么问题", subtitle: "一句话说清楚" },
+  { title: "我们的方案是什么", subtitle: "Agent 核心逻辑架构" },
+  { title: "现场演示入口", subtitle: "真实系统操作界面" },
+  { title: "能力边界说明", subtitle: "诚实面对能做什么、不能做什么" },
+  { title: "如果再给我们一天", subtitle: "现实而具体的下一步" },
+];
+
+const DEMO_LINKS = [
+  { 
+    icon: "🧭", title: "员工端 — 透明灯塔", 
+    desc: "查看岗位JD、了解转岗流程、获取政策解读", 
+    url: SYSTEM_BASE,
+  },
+  { 
+    icon: "📄", title: "履历解析 — AI智能录入", 
+    desc: "上传简历/项目成果/作品集，AI自动解析结构化数据", 
+    url: SYSTEM_BASE,
+  },
+  { 
+    icon: "🔬", title: "职业诊断 — 胜任力报告", 
+    desc: "DeepSeek五维度匹配分析+个人胜任力诊断报告", 
+    url: SYSTEM_BASE,
+  },
+  { 
+    icon: "⚙️", title: "管理后台 — 人才画像配置", 
+    desc: "权重调整、AI模型配置、候选人流转管理", 
+    url: SYSTEM_BASE,
+  },
+];
+
+// ========================= BLUE BG DECORATION =========================
+
+function BgDecoration({ opacity = 0.5 }) {
+  return (
+    <>
+      <div className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full opacity-[0.12]" 
+           style={{ background: 'radial-gradient(circle, #0052D9 0%, transparent 70%)' }} />
+      <div className="absolute -bottom-40 -left-40 w-[600px] h-[600px] rounded-full opacity-[0.08]" 
+           style={{ background: 'radial-gradient(circle, #3662EC 0%, transparent 70%)' }} />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full opacity-[0.04]" 
+           style={{ background: 'radial-gradient(circle, #618DFF 0%, transparent 60%)' }} />
+    </>
+  );
+}
+
+// ========================= LOGIN SCREEN =========================
+
+function LoginScreen({ onEnter }) {
+  const [hovered, setHovered] = useState(false);
+  
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#F7F8FA]">
+      <BgDecoration opacity={0.6} />
+      
+      <div className="relative z-10 text-center space-y-10 px-6 max-w-2xl">
+        
+        <div 
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+          onClick={onEnter}
+          className="cursor-pointer group"
+        >
+          {/* Icon */}
+          <div className={`
+            w-28 h-28 mx-auto mb-8 rounded-3xl flex items-center justify-center
+            bg-white border border-[#E5E6EB]
+            shadow-xl shadow-[#0052D9]/5
+            transition-all duration-500
+            ${hovered ? 'scale-105 shadow-2xl shadow-[#0052D9]/10 -translate-y-1' : ''}
+          `}>
+            <span className="text-5xl">📽️</span>
+          </div>
+          
+          {/* Title */}
+          <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-3 text-[#1D2129]">
+            立项路演
+          </h1>
+          <h2 className="text-3xl md:text-5xl font-black tracking-tight mb-6 gradient-text">
+            PPT 汇报空间
+          </h2>
+          
+          <p className="text-base text-[#86909C] font-medium tracking-wide max-w-md mx-auto leading-relaxed">
+            沉浸式大屏投影演示 · 全键盘导航 · 实时系统联动
+          </p>
+          
+          {/* CTA */}
+          <div className={`
+            mt-10 inline-flex items-center gap-3 px-10 py-4 rounded-2xl
+            bg-[#0052D9] text-white font-bold text-lg
+            transition-all duration-500
+            shadow-lg shadow-[#0052D9]/20
+            ${hovered ? 'bg-[#003EB3] scale-105 shadow-xl shadow-[#0052D9]/30' : ''}
+          `}>
+            <span>进入演讲模式</span>
+            <span className={`transition-transform duration-500 ${hovered ? 'translate-x-1' : ''}`}>→</span>
+          </div>
+        </div>
+        
+        {/* Hint */}
+        <div className="text-[#86909C] text-sm flex items-center justify-center gap-6">
+          <span>⌨️ ← → 翻页</span>
+          <span>🔲 F 全屏</span>
+          <span>⎋ Esc 退出</span>
+        </div>
+      </div>
+      
+      {/* Bottom bar */}
+      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-[#0052D9]/0 via-[#0052D9]/30 to-[#0052D9]/0" />
+    </div>
+  );
+}
+
+// ========================= SLIDE 1: PROBLEM =========================
+
+function Slide1() {
+  return (
+    <div className="slide-enter flex flex-col items-center justify-center h-full px-8 md:px-20 bg-[#F7F8FA] relative">
+      <BgDecoration />
+      <div className="text-center max-w-4xl relative z-10">
+        <div className="inline-block mb-8 px-5 py-2 rounded-full bg-[#E8F3FF] text-[#0052D9] text-xs font-bold tracking-wider border border-[#0052D9]/15">
+          SLIDE 01 · 问题定义
+        </div>
+        
+        <h2 className="text-5xl md:text-7xl font-black text-[#1D2129] mb-6 tracking-tight">
+          我们解决什么问题
+        </h2>
+        
+        <p className="text-xl md:text-2xl text-[#4E5969] font-medium mb-16 leading-relaxed max-w-3xl mx-auto">
+          一句话说清楚：
+          <br />
+          <span className="font-black text-[#0052D9]">
+            "企业内部人才流动中，不知道谁能干什么、谁会干什么"
+          </span>
+        </p>
+        
+        {/* Pain points */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-4xl mx-auto">
+          {[
+            { emoji: "🔒", title: "信息壁垒", desc: "部门墙导致人才能力不可见\n优秀员工被困在看不见的天花板下" },
+            { emoji: "🎯", title: "主观评估", desc: "依赖人工判断，缺乏数据支撑\n'我觉得他可以'≠他真的可以" },
+            { emoji: "⚡", title: "效率低下", desc: "转岗流程冗长，HR负担沉重\n从申请到面试平均耗时2周+" },
+          ].map((item, i) => (
+            <div key={i} className="p-7 rounded-2xl bg-white border border-[#E5E6EB] shadow-sm text-left hover:shadow-md hover:border-[#0052D9]/20 transition-all duration-300">
+              <div className="text-3xl mb-4">{item.emoji}</div>
+              <h3 className="text-lg font-black text-[#1D2129] mb-2">{item.title}</h3>
+              <p className="text-[#86909C] text-sm leading-relaxed whitespace-pre-line">{item.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ========================= SLIDE 2: SOLUTION =========================
+
+function Slide2() {
+  return (
+    <div className="slide-enter flex flex-col items-center justify-center h-full px-8 md:px-12 bg-[#F7F8FA] relative">
+      <BgDecoration />
+      <div className="text-center max-w-6xl w-full relative z-10">
+        <div className="inline-block mb-8 px-5 py-2 rounded-full bg-[#EFFFF1] text-[#2BA471] text-xs font-bold tracking-wider border border-[#2BA471]/15">
+          SLIDE 02 · 解决方案
+        </div>
+        
+        <h2 className="text-5xl md:text-7xl font-black text-[#1D2129] mb-4 tracking-tight">
+          我们的方案是什么
+        </h2>
+        <p className="text-lg text-[#86909C] mb-10 font-medium">Agent 核心逻辑架构图</p>
+        
+        {/* Architecture Diagram - SVG */}
+        <div className="relative w-full max-w-5xl mx-auto bg-white rounded-3xl p-8 border border-[#E5E6EB] shadow-sm">
+          <svg viewBox="0 0 900 360" className="w-full" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#0052D9" stopOpacity="0.12"/>
+                <stop offset="100%" stopColor="#3662EC" stopOpacity="0.12"/>
+              </linearGradient>
+              <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#2BA471" stopOpacity="0.15"/>
+                <stop offset="100%" stopColor="#00A870" stopOpacity="0.15"/>
+              </linearGradient>
+              <linearGradient id="grad3" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#E37318" stopOpacity="0.15"/>
+                <stop offset="100%" stopColor="#D54941" stopOpacity="0.15"/>
+              </linearGradient>
+              <filter id="glow">
+                <feGaussianBlur stdDeviation="2" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+            
+            {/* Connecting lines */}
+            <line x1="65" y1="180" x2="225" y2="100" stroke="#0052D9" strokeOpacity="0.25" strokeWidth="2" strokeDasharray="6,4"/>
+            <line x1="65" y1="180" x2="225" y2="260" stroke="#0052D9" strokeOpacity="0.25" strokeWidth="2" strokeDasharray="6,4"/>
+            <line x1="390" y1="100" x2="550" y2="140" stroke="#2BA471" strokeOpacity="0.3" strokeWidth="2"/>
+            <line x1="390" y1="260" x2="550" y2="220" stroke="#2BA471" strokeOpacity="0.3" strokeWidth="2"/>
+            <line x1="390" y1="180" x2="550" y2="180" stroke="#2BA471" strokeOpacity="0.3" strokeWidth="2"/>
+            <line x1="715" y1="140" x2="840" y2="165" stroke="#E37318" strokeOpacity="0.3" strokeWidth="2"/>
+            <line x1="715" y1="220" x2="840" y2="195" stroke="#E37318" strokeOpacity="0.3" strokeWidth="2"/>
+            <line x1="715" y1="180" x2="840" y2="180" stroke="#E37318" strokeOpacity="0.3" strokeWidth="2"/>
+            
+            {/* Input Layer */}
+            <rect x="10" y="145" width="110" height="70" rx="12" fill="url(#grad1)" stroke="#0052D9" strokeOpacity="0.3" strokeWidth="1.5"/>
+            <text x="65" y="172" textAnchor="middle" fill="#0052D9" font-size="12" font-weight="800">📥 输入层</text>
+            <text x="65" y="195" textAnchor="middle" fill="#86909C" font-size="9" font-weight="500">简历·JD·作品</text>
+            
+            {/* Parse Layer */}
+            <rect x="170" y="65" width="110" height="70" rx="12" fill="url(#grad1)" stroke="#3662EC" strokeOpacity="0.3" strokeWidth="1.5"/>
+            <text x="225" y="92" textAnchor="middle" fill="#3662EC" font-size="12" font-weight="800">🔍 AI解析</text>
+            <text x="225" y="115" textAnchor="middle" fill="#86909C" font-size="9" font-weight="500">DeepSeek+Gemini</text>
+            
+            <rect x="170" y="225" width="110" height="70" rx="12" fill="url(#grad1)" stroke="#3662EC" strokeOpacity="0.3" strokeWidth="1.5"/>
+            <text x="225" y="252" textAnchor="middle" fill="#3662EC" font-size="12" font-weight="800">🧠 画像构建</text>
+            <text x="225" y="275" textAnchor="middle" fill="#86909C" font-size="9" font-weight="500">人才·JD画像</text>
+            
+            {/* Match Layer */}
+            <rect x="335" y="95" width="110" height="45" rx="12" fill="url(#grad2)" stroke="#2BA471" strokeOpacity="0.35" strokeWidth="1.5" filter="url(#glow)"/>
+            <text x="390" y="122" textAnchor="middle" fill="#2BA471" font-size="11" font-weight="800">技能匹配</text>
+            
+            <rect x="335" y="157" width="110" height="45" rx="12" fill="url(#grad2)" stroke="#2BA471" strokeOpacity="0.35" strokeWidth="1.5" filter="url(#glow)"/>
+            <text x="390" y="184" textAnchor="middle" fill="#2BA471" font-size="11" font-weight="800">经验匹配</text>
+            
+            <rect x="335" y="220" width="110" height="45" rx="12" fill="url(#grad2)" stroke="#2BA471" strokeOpacity="0.35" strokeWidth="1.5" filter="url(#glow)"/>
+            <text x="390" y="247" textAnchor="middle" fill="#2BA471" font-size="11" font-weight="800">跨界潜力</text>
+            
+            {/* Score Layer */}
+            <rect x="500" y="130" width="110" height="45" rx="12" fill="url(#grad3)" stroke="#E37318" strokeOpacity="0.35" strokeWidth="1.5"/>
+            <text x="555" y="157" textAnchor="middle" fill="#E37318" font-size="11" font-weight="800">加权评分</text>
+            
+            <rect x="500" y="185" width="110" height="45" rx="12" fill="url(#grad3)" stroke="#D54941" strokeOpacity="0.35" strokeWidth="1.5"/>
+            <text x="555" y="212" textAnchor="middle" fill="#D54941" font-size="11" font-weight="800">维度拆解</text>
+            
+            {/* Output Layer */}
+            <rect x="660" y="140" width="110" height="45" rx="12" fill="url(#grad3)" stroke="#D54941" strokeOpacity="0.35" strokeWidth="1.5"/>
+            <text x="715" y="167" textAnchor="middle" fill="#D54941" font-size="11" font-weight="800">诊断报告</text>
+            
+            <rect x="660" y="200" width="110" height="45" rx="12" fill="url(#grad3)" stroke="#D54941" strokeOpacity="0.35" strokeWidth="1.5"/>
+            <text x="715" y="227" textAnchor="middle" fill="#D54941" font-size="11" font-weight="800">学习推荐</text>
+            
+            {/* Final Output */}
+            <rect x="815" y="155" width="70" height="50" rx="12" fill="#0052D9" fillOpacity="0.1" stroke="#0052D9" strokeOpacity="0.4" strokeWidth="2" filter="url(#glow)"/>
+            <text x="850" y="178" textAnchor="middle" fill="#0052D9" font-size="11" font-weight="800">📊</text>
+            <text x="850" y="194" textAnchor="middle" fill="#0052D9" font-size="8" font-weight="700">输出</text>
+          </svg>
+        </div>
+        
+        {/* Weight breakdown */}
+        <div className="grid grid-cols-4 gap-4 max-w-4xl mx-auto mt-8">
+          {[
+            { label: "材料匹配", pct: "55%", color: "#0052D9" },
+            { label: "部门绩效", pct: "15%", color: "#2BA471" },
+            { label: "跨界潜力", pct: "15%", color: "#E37318" },
+            { label: "笔试成绩", pct: "15%", color: "#D54941" },
+          ].map((item, i) => (
+            <div key={i} className="text-center bg-white rounded-2xl p-4 border border-[#E5E6EB] shadow-sm">
+              <div className="text-2xl font-black text-[#1D2129] mb-1">{item.pct}</div>
+              <div className="h-1.5 rounded-full mb-2" style={{ backgroundColor: item.color, opacity: 0.7 }} />
+              <div className="text-xs text-[#86909C] font-bold">{item.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ========================= SLIDE 3: DEMO =========================
+
+function Slide3() {
+  return (
+    <div className="slide-enter flex flex-col items-center justify-center h-full px-8 md:px-12 bg-[#F7F8FA] relative">
+      <BgDecoration />
+      <div className="text-center max-w-6xl w-full relative z-10">
+        <div className="inline-block mb-8 px-5 py-2 rounded-full bg-[#FFF8F0] text-[#E37318] text-xs font-bold tracking-wider border border-[#E37318]/15">
+          SLIDE 03 · 现场演示
+        </div>
+        
+        <h2 className="text-5xl md:text-7xl font-black text-[#1D2129] mb-4 tracking-tight">
+          现场演示入口
+        </h2>
+        <p className="text-lg text-[#86909C] mb-10 font-medium">一键免密跳转真实系统操作界面</p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-5xl mx-auto">
+          {DEMO_LINKS.map((link, i) => (
+            <a
+              key={i}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="demo-card group block p-7 rounded-2xl bg-white border border-[#E5E6EB] shadow-sm text-left relative overflow-hidden"
+            >
+              {/* Top accent bar */}
+              <div className="absolute top-0 left-0 right-0 h-1 bg-[#0052D9] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              
+              <div className="flex items-start gap-5">
+                <div className="w-14 h-14 rounded-2xl bg-[#E8F3FF] flex items-center justify-center text-2xl shrink-0">
+                  {link.icon}
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-black text-[#1D2129] mb-1.5">{link.title}</h3>
+                  <p className="text-[#86909C] text-sm leading-relaxed mb-4">{link.desc}</p>
+                  <span className="inline-flex items-center gap-2 text-[#0052D9] text-sm font-bold group-hover:gap-3 transition-all">
+                    一键免密跳转
+                    <span className="group-hover:translate-x-1 transition-transform">→</span>
+                  </span>
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+        
+        <p className="mt-8 text-[#86909C] text-sm font-medium">
+          ⚡ 每个入口直接跳转真实系统，无需登录验证
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ========================= SLIDE 4: BOUNDARIES =========================
+
+function Slide4() {
+  return (
+    <div className="slide-enter flex flex-col items-center justify-center h-full px-8 md:px-20 bg-[#F7F8FA] relative">
+      <BgDecoration />
+      <div className="text-center max-w-5xl w-full relative z-10">
+        <div className="inline-block mb-8 px-5 py-2 rounded-full bg-[#F3E8FF] text-[#8B5CF6] text-xs font-bold tracking-wider border border-[#8B5CF6]/15">
+          SLIDE 04 · 能力边界
+        </div>
+        
+        <h2 className="text-5xl md:text-7xl font-black text-[#1D2129] mb-14 tracking-tight">
+          能力边界说明
+        </h2>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* CAN DO */}
+          <div className="rounded-3xl bg-white border border-[#E5E6EB] p-8 md:p-10 text-left shadow-sm">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-12 h-12 rounded-xl bg-[#EFFFF1] flex items-center justify-center text-3xl">✅</div>
+              <h3 className="text-3xl font-black text-[#2BA471]">我们能做的</h3>
+            </div>
+            <ul className="space-y-6">
+              {[
+                { title: "AI简历智能解析", desc: "自动提取技能、经历、项目成果，结构化存储" },
+                { title: "多维度胜任力匹配", desc: "5维度加权评分（技能45%、经验25%、教育10%、潜力15%、文化5%）" },
+                { title: "技能差距分析", desc: "精准定位候选人与JD之间的能力缺口，生成学习路径" },
+                { title: "诊断报告自动生成", desc: "包含总分圆环、雷达图、维度拆解、HR研判建议" },
+                { title: "全流程数据追踪", desc: "从申报到面试的全链路可视化，操作留痕可追溯" },
+              ].map((item, i) => (
+                <li key={i} className="flex items-start gap-4">
+                  <span className="w-2 h-2 rounded-full bg-[#2BA471] mt-2.5 shrink-0" />
+                  <div>
+                    <div className="text-[#1D2129] font-black text-lg md:text-xl mb-1">{item.title}</div>
+                    <div className="text-[#86909C] text-sm leading-relaxed">{item.desc}</div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+          
+          {/* CANNOT DO */}
+          <div className="rounded-3xl bg-white border border-[#E5E6EB] p-8 md:p-10 text-left shadow-sm">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-12 h-12 rounded-xl bg-[#FFF2F1] flex items-center justify-center text-3xl">⚠️</div>
+              <h3 className="text-3xl font-black text-[#D54941]">我们不能做的</h3>
+            </div>
+            <ul className="space-y-6">
+              {[
+                { title: "替代HR最终决策", desc: "AI提供数据参考，但录用决策必须由人类做出并承担责任" },
+                { title: "感知情绪与组织氛围", desc: "无法理解候选人的焦虑、期待、犹豫等真实情感状态" },
+                { title: "理解非结构化组织文化", desc: "团队化学反应、隐性权力结构、未成文的协作规则" },
+                { title: "保证100%评估准确性", desc: "模型受限于训练数据和prompt设计，存在偏见和误差" },
+                { title: "自动化闭环全流程", desc: "申诉处理、异常复核、特别审批仍需人工介入" },
+              ].map((item, i) => (
+                <li key={i} className="flex items-start gap-4">
+                  <span className="w-2 h-2 rounded-full bg-[#D54941] mt-2.5 shrink-0" />
+                  <div>
+                    <div className="text-[#1D2129] font-black text-lg md:text-xl mb-1">{item.title}</div>
+                    <div className="text-[#86909C] text-sm leading-relaxed">{item.desc}</div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+        
+        <p className="mt-10 text-[#86909C] text-sm font-medium max-w-2xl mx-auto leading-relaxed">
+          诚实面对技术的边界，是产品经理最重要的素养。AI 是工具，不是答案。最终的责任永远在人。
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ========================= SLIDE 5: NEXT STEPS =========================
+
+function Slide5() {
+  return (
+    <div className="slide-enter flex flex-col items-center justify-center h-full px-8 md:px-20 bg-[#F7F8FA] relative">
+      <BgDecoration />
+      <div className="text-center max-w-4xl w-full relative z-10">
+        <div className="inline-block mb-8 px-5 py-2 rounded-full bg-[#E8F3FF] text-[#0052D9] text-xs font-bold tracking-wider border border-[#0052D9]/15">
+          SLIDE 05 · 下一步行动
+        </div>
+        
+        <h2 className="text-5xl md:text-7xl font-black text-[#1D2129] mb-4 tracking-tight">
+          如果再给我们一天
+        </h2>
+        <p className="text-xl text-[#86909C] font-medium mb-14">我们会做什么</p>
+        
+        <div className="space-y-4 text-left max-w-3xl mx-auto">
+          {[
+            {
+              step: "01", title: "找企业专业HR进行评估",
+              desc: "邀请真实的HR专家试用系统，获取专业反馈。不是我们自己觉得好用，而是真正的一线使用者认可它。",
+              icon: "👥"
+            },
+            {
+              step: "02", title: "找真正有转岗需求的员工评估",
+              desc: "找到正在经历内部转岗的同事，让他们实际走完整条链路，观察真实使用中的痛点和惊喜。",
+              icon: "🎯"
+            },
+            {
+              step: "03", title: "请他们提改进建议",
+              desc: "不预设答案，不引导结论。认真倾听每一位用户的真实声音，尤其是批评和质疑。",
+              icon: "💬"
+            },
+            {
+              step: "04", title: "评判实地落地的可能性",
+              desc: "产品不只是代码，是对真实世界的理解、是对组织行为的洞察。无法落地的方案，再精美也是空中楼阁。",
+              icon: "🏗️"
+            },
+          ].map((item, i) => (
+            <div key={i} className="flex items-start gap-5 p-5 rounded-2xl bg-white border border-[#E5E6EB] shadow-sm hover:shadow-md hover:border-[#0052D9]/15 transition-all duration-300">
+              <div className="w-12 h-12 rounded-xl bg-[#E8F3FF] flex items-center justify-center text-xl shrink-0">
+                {item.icon}
+              </div>
+              <div>
+                <div className="flex items-center gap-3 mb-1">
+                  <span className="text-[#0052D9] font-black text-sm">{item.step}</span>
+                  <h3 className="text-lg font-black text-[#1D2129]">{item.title}</h3>
+                </div>
+                <p className="text-[#86909C] text-sm leading-relaxed">{item.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        <div className="mt-10 p-5 rounded-2xl bg-[#FFF2F1] border border-[#D54941]/15 max-w-2xl mx-auto">
+          <p className="text-[#D54941] text-base font-bold leading-relaxed">
+            ⚠️ 没有真实用户的反馈，再好的产品也是镜花水月、空中楼阁。
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ========================= CLOSING SLIDE =========================
+
+function ClosingSlide() {
+  return (
+    <div className="slide-enter flex items-center justify-center h-full px-6 md:px-16 bg-[#F7F8FA] relative overflow-hidden">
+      <BgDecoration opacity={0.4} />
+      
+      <div className="relative z-10 w-full max-w-4xl mx-auto custom-scrollbar overflow-y-auto" style={{maxHeight: '88vh'}}>
+        
+        {/* === SECTION 1: 开场破题 === */}
+        <div className="text-center mb-9 space-y-2">
+          <p className="text-lg md:text-xl text-[#4E5969] font-medium leading-relaxed">
+            做出来的东西不需要多好
+          </p>
+          <p className="text-lg md:text-xl text-[#4E5969] font-medium leading-relaxed">
+            技术层面迟早都能做到
+          </p>
+          <div className="pt-2">
+            <p className="text-2xl md:text-3xl text-[#1D2129] font-black leading-relaxed">
+              真正宝贵的是 <span className="gradient-text">idea</span>
+            </p>
+            <p className="text-base md:text-lg text-[#86909C] font-medium mt-2">
+              是 coding 过程中的——
+            </p>
+          </div>
+        </div>
+
+        {/* === SECTION 2: 三大核心能力 (横排卡片) === */}
+        <div className="grid grid-cols-3 gap-3 md:gap-5 mb-9">
+          {[
+            { word: "洞察力", emoji: "👁️" },
+            { word: "逻辑思维", emoji: "🧩" },
+            { word: "创造力", emoji: "💡" },
+          ].map((item, i) => (
+            <div key={i} className="rounded-2xl bg-white border border-[#E5E6EB] shadow-sm p-5 md:p-7 text-center hover:shadow-md hover:border-[#0052D9]/20 transition-all">
+              <div className="text-4xl md:text-5xl mb-3">{item.emoji}</div>
+              <div className="gradient-text text-2xl md:text-3xl font-black">{item.word}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* === SECTION 3: 不可替代的品质 === */}
+        <div className="text-center mb-8 p-5 md:p-7 rounded-2xl bg-white border border-[#E5E6EB] shadow-sm">
+          <p className="gradient-text text-xl md:text-2xl font-black mb-3 leading-relaxed">
+            品格 · 韧性 · 审美
+          </p>
+          <p className="text-base md:text-lg text-[#4E5969] font-bold leading-relaxed mb-4">
+            同理心 · 责任心 · 判断力 · 行动落地能力
+          </p>
+          <div className="space-y-1.5 pt-1">
+            <p className="text-sm md:text-base text-[#86909C] leading-relaxed">
+              这些品质不会因为智能被大规模生产而失去价值
+            </p>
+            <p className="text-sm md:text-base text-[#4E5969] font-semibold leading-relaxed">
+              当「聪明」越来越便宜
+            </p>
+            <p className="text-sm md:text-base text-[#1D2129] font-black leading-relaxed">
+              这些不可被商品化的品质反而 <span className="text-[#0052D9]">更稀缺</span>
+            </p>
+          </div>
+        </div>
+
+        {/* === SECTION 4: AI的局限 === */}
+        <div className="text-center mb-8 p-5 md:p-7 rounded-2xl bg-[#F2F3F5] border border-[#E5E6EB]">
+          <p className="text-sm md:text-base text-[#4E5969] leading-relaxed mb-2">
+            AI 可以推理、反思
+          </p>
+          <p className="text-sm md:text-base text-[#86909C] leading-relaxed mb-5">
+            但没有情感与内分泌系统
+          </p>
+          <p className="text-base md:text-lg text-[#1D2129] font-bold leading-relaxed">
+            人类真正不可替代的价值在于：
+          </p>
+        </div>
+
+        {/* === SECTION 5: 核心金句 (大字高亮) === */}
+        <div className="text-center space-y-4 mb-9">
+          <p className="text-3xl md:text-5xl font-black text-[#0052D9] leading-tight">
+            做决策并承担责任
+          </p>
+          <p className="text-3xl md:text-5xl font-black text-[#0052D9] leading-tight">
+            拥有爱与情感
+          </p>
+        </div>
+
+        {/* === SECTION 6: 结尾引言 === */}
+        <div className="text-center pt-6 border-t border-[#E5E6EB]">
+          <p className="text-[#86909C] text-sm max-w-xl mx-auto leading-relaxed">
+            "当 AI 越来越擅长模仿思考，那些无法被算法复制的品质——判断力、同理心、承担后果的勇气——将成为人类最后的护城河。"
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ========================= MAIN PRESENTATION =========================
+
+function Presentation({ onBack }) {
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [transitioning, setTransitioning] = useState(false);
+  const totalSlides = SLIDES + 1;
+
+  const goTo = useCallback((index) => {
+    if (index < 0 || index >= totalSlides || transitioning) return;
+    setTransitioning(true);
+    setCurrentSlide(index);
+    setTimeout(() => setTransitioning(false), 450);
+  }, [totalSlides, transitioning]);
+
+  const next = useCallback(() => goTo(currentSlide + 1), [currentSlide, goTo]);
+  const prev = useCallback(() => goTo(currentSlide - 1), [currentSlide, goTo]);
+
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+        e.preventDefault();
+        next();
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        prev();
+      } else if (e.key === 'f' || e.key === 'F') {
+        toggleFullscreen();
+      } else if (e.key === 'Escape') {
+        if (document.fullscreenElement) {
+          document.exitFullscreen();
+          setIsFullscreen(false);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [next, prev, toggleFullscreen]);
+
+  const slideComponents = [
+    <Slide1 key="s1" />,
+    <Slide2 key="s2" />,
+    <Slide3 key="s3" />,
+    <Slide4 key="s4" />,
+    <Slide5 key="s5" />,
+    <ClosingSlide key="closing" />,
+  ];
+
+  const isClosing = currentSlide === SLIDES;
+
+  return (
+    <div className="fixed inset-0 bg-[#F7F8FA] overflow-hidden">
+      
+      {/* Slide counter + controls */}
+      <div className="fixed top-6 right-6 z-50 flex items-center gap-3">
+        {!isClosing ? (
+          <span className="text-[#86909C] text-sm font-mono font-bold tracking-wide">
+            {String(currentSlide + 1).padStart(2, '0')} / {String(SLIDES).padStart(2, '0')}
+          </span>
+        ) : (
+          <span className="text-[#0052D9] text-sm font-mono font-bold">✨ 结尾升华</span>
+        )}
+        
+        <button
+          onClick={toggleFullscreen}
+          className="w-9 h-9 rounded-xl bg-white border border-[#E5E6EB] flex items-center justify-center text-[#86909C] hover:text-[#0052D9] hover:border-[#0052D9]/30 transition-all text-sm shadow-sm"
+          title="全屏 (F)"
+        >
+          {isFullscreen ? '⊠' : '⛶'}
+        </button>
+        
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="px-4 py-1.5 rounded-xl bg-white border border-[#E5E6EB] text-[#86909C] text-xs font-bold hover:text-[#0052D9] hover:border-[#0052D9]/30 transition-all shadow-sm"
+          >
+            返回登录
+          </button>
+        )}
+      </div>
+      
+      {/* Slide content */}
+      <div className="w-full h-full">
+        {slideComponents[currentSlide]}
+      </div>
+      
+      {/* Navigation dots */}
+      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-3 z-50">
+        {Array.from({ length: totalSlides }).map((_, i) => (
+          <button
+            key={i}
+            onClick={() => goTo(i)}
+            className={`
+              transition-all duration-300 rounded-full
+              ${i === currentSlide 
+                ? 'w-3 h-3 bg-[#0052D9] shadow-md shadow-[#0052D9]/20' 
+                : i === SLIDES
+                ? 'w-2 h-2 bg-[#618DFF]/40 hover:bg-[#618DFF]/60'
+                : 'w-2 h-2 bg-[#C9CDD4] hover:bg-[#86909C]'
+              }
+            `}
+          />
+        ))}
+      </div>
+      
+      {/* Navigation arrows */}
+      {currentSlide > 0 && (
+        <button
+          onClick={prev}
+          className="fixed left-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white border border-[#E5E6EB] flex items-center justify-center text-[#86909C] hover:text-[#0052D9] hover:border-[#0052D9]/30 hover:shadow-md transition-all z-50 shadow-sm"
+        >
+          ←
+        </button>
+      )}
+      {currentSlide < totalSlides - 1 && (
+        <button
+          onClick={next}
+          className="fixed right-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-[#0052D9] flex items-center justify-center text-white hover:bg-[#003EB3] hover:shadow-lg transition-all z-50 shadow-md"
+        >
+          →
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ========================= APP ROOT =========================
+
+function App() {
+  const [screen, setScreen] = useState('login');
+  
+  return (
+    <>
+      {screen === 'login' && (
+        <LoginScreen onEnter={() => setScreen('presentation')} />
+      )}
+      {screen === 'presentation' && (
+        <Presentation onBack={() => setScreen('login')} />
+      )}
+    </>
+  );
+}
+
+ReactDOM.render(<App />, document.getElementById('root'));
+</script>
+</body>
+</html>
