@@ -57,7 +57,7 @@ export function Login({ onLoginSuccess }: LoginProps) {
   };
 
   const handleRoadshow = () => {
-    window.open('/roadshow.html', '_blank');
+    window.open(import.meta.env.BASE_URL + 'roadshow.html', '_blank');
   };
 
   return (

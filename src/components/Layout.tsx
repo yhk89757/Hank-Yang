@@ -69,7 +69,7 @@ export function Layout({ children, view, setView, activeModule, setActiveModule,
         <div className="flex items-center gap-6">
           {/* ====== 路演投影PPT按钮 (雷达呼吸灯) ====== */}
           <button
-            onClick={() => window.open('/roadshow.html', '_blank')}
+            onClick={() => window.open(import.meta.env.BASE_URL + 'roadshow.html', '_blank')}
             className="relative flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[#0052D9]/5 to-[#8b5cf6]/5 border border-[#0052D9]/20 hover:border-[#0052D9]/40 hover:bg-[#0052D9]/10 transition-all group"
             title="打开立项路演 PPT 汇报空间"
           >
